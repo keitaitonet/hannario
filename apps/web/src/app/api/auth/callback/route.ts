@@ -21,7 +21,13 @@ export async function GET(req: NextRequest) {
   }
 
   const oidcConfig = await getOidcConfig();
-  const tokens = await client.authorizationCodeGrant(oidcConfig, req, {
+  // Reconstruct the callback URL using the public origin so the redirect_uri
+  // sent during code exchange matches the one used at /authorize. Behind a
+  // reverse proxy / tunnel, req.url carries the internal origin and Cognito
+  // rejects the exchange with `invalid_redirect`.
+  const callbackUrl = new URL(config.cognito.redirectUri);
+  callbackUrl.search = req.nextUrl.search;
+  const tokens = await client.authorizationCodeGrant(oidcConfig, callbackUrl, {
     pkceCodeVerifier: parsed.codeVerifier,
     expectedState: parsed.state,
   });
