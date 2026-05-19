@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "typecheck": "tsc"
+    "typecheck": "next typegen && tsc"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
