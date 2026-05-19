@@ -4,7 +4,7 @@ import { database, usersTable } from "@repo/database";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as v from "valibot";
-import { authActionClient } from "@/lib/safe-action";
+import { memberActionClient } from "@/lib/safe-action";
 
 const SettingsSchema = v.pipe(
   v.instance(FormData),
@@ -19,7 +19,7 @@ const SettingsSchema = v.pipe(
   }),
 );
 
-export const updateSettings = authActionClient
+export const updateSettings = memberActionClient
   .inputSchema(SettingsSchema)
   .stateAction(async ({ parsedInput, ctx }) => {
     await database

@@ -31,16 +31,25 @@ export function buildLogoutUrl(): URL {
 export async function upsertUserByCognitoSub(
   cognitoSub: string,
 ): Promise<number> {
-  const [row] = await database
-    .insert(usersTable)
-    .values({ cognitoSub })
-    .onConflictDoUpdate({
-      target: usersTable.cognitoSub,
-      set: { cognitoSub },
-    })
-    .returning({ id: usersTable.id });
-  if (!row) throw new Error("Failed to upsert user");
-  return row.id;
+  return await database.transaction(async (tx) => {
+    // First-ever user is auto-granted so the system has a bootstrap admin.
+    // Race window between two simultaneous first signups is acceptable.
+    const [existing] = await tx
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .limit(1);
+    const grantedAt = existing ? undefined : new Date();
+    const [row] = await tx
+      .insert(usersTable)
+      .values({ cognitoSub, grantedAt })
+      .onConflictDoUpdate({
+        target: usersTable.cognitoSub,
+        set: { cognitoSub },
+      })
+      .returning({ id: usersTable.id });
+    if (!row) throw new Error("Failed to upsert user");
+    return row.id;
+  });
 }
 
 export async function createSession(

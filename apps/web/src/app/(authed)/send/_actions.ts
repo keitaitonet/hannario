@@ -2,7 +2,7 @@
 
 import { database, discordOutboxTable } from "@repo/database";
 import * as v from "valibot";
-import { authActionClient } from "@/lib/safe-action";
+import { memberActionClient } from "@/lib/safe-action";
 
 const SnowflakeSchema = v.pipe(
   v.string(),
@@ -32,7 +32,7 @@ const SendMessageSchema = v.pipe(
   }),
 );
 
-export const sendMessage = authActionClient
+export const sendMessage = memberActionClient
   .inputSchema(SendMessageSchema)
   .stateAction(async ({ parsedInput }) => {
     await database.insert(discordOutboxTable).values({

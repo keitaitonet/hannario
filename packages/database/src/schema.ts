@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   index,
   integer,
   pgTable,
@@ -23,6 +24,11 @@ export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
   cognitoSub: text("cognito_sub").notNull().unique(),
   name: text("name"),
+  grantedAt: timestamp("granted_at", { withTimezone: true }),
+  grantedById: integer("granted_by_id").references(
+    (): AnyPgColumn => usersTable.id,
+    { onDelete: "set null" },
+  ),
   ...timestamps,
 });
 
@@ -65,8 +71,14 @@ export const discordOutboxTable = pgTable(
   ],
 );
 
-export const usersRelations = relations(usersTable, ({ many }) => ({
+export const usersRelations = relations(usersTable, ({ many, one }) => ({
   sessions: many(sessionsTable),
+  grantedBy: one(usersTable, {
+    fields: [usersTable.grantedById],
+    references: [usersTable.id],
+    relationName: "grantedBy",
+  }),
+  grantedUsers: many(usersTable, { relationName: "grantedBy" }),
 }));
 
 export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
