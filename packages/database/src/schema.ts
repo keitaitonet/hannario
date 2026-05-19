@@ -7,6 +7,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -56,6 +57,10 @@ export const discordOutboxTable = pgTable(
     channelId: text("channel_id").notNull(),
     threadId: text("thread_id"),
     content: text("content").notNull(),
+    createdByUserId: integer("created_by_user_id").references(
+      () => usersTable.id,
+      { onDelete: "set null" },
+    ),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -68,6 +73,33 @@ export const discordOutboxTable = pgTable(
   },
   (table) => [
     index("discord_outbox_due_idx").on(table.status, table.scheduledAt),
+  ],
+);
+
+export const discordDestinationsTable = pgTable(
+  "discord_destinations",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    channelId: text("channel_id").notNull(),
+    threadId: text("thread_id"),
+    channelName: text("channel_name"),
+    threadName: text("thread_name"),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    ...timestamps,
+  },
+  (table) => [
+    unique("discord_destinations_user_target_unique")
+      .on(table.userId, table.channelId, table.threadId)
+      .nullsNotDistinct(),
+    index("discord_destinations_user_recent_idx").on(
+      table.userId,
+      table.lastUsedAt,
+    ),
   ],
 );
 
@@ -87,3 +119,13 @@ export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
     references: [usersTable.id],
   }),
 }));
+
+export const discordDestinationsRelations = relations(
+  discordDestinationsTable,
+  ({ one }) => ({
+    user: one(usersTable, {
+      fields: [discordDestinationsTable.userId],
+      references: [usersTable.id],
+    }),
+  }),
+);

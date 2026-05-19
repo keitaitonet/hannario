@@ -1,5 +1,9 @@
-import { database, discordOutboxTable } from "@repo/database";
-import { type Client, Events } from "discord.js";
+import {
+  database,
+  discordDestinationsTable,
+  discordOutboxTable,
+} from "@repo/database";
+import { type Channel, type Client, Events } from "discord.js";
 import { and, eq, lt, sql } from "drizzle-orm";
 import type { Logger } from "pino";
 import { defineMod } from "../types";
@@ -44,6 +48,58 @@ export default defineMod({
   },
 });
 
+type DestinationRecord = {
+  userId: number;
+  channelId: string;
+  threadId: string | null;
+  target: Channel;
+};
+
+async function recordDestination(
+  { userId, channelId, threadId, target }: DestinationRecord,
+  logger: Logger,
+) {
+  try {
+    let channelName: string | null = null;
+    let threadName: string | null = null;
+    if (target.isThread()) {
+      threadName = target.name;
+      channelName = target.parent?.name ?? null;
+    } else if ("name" in target && typeof target.name === "string") {
+      channelName = target.name;
+    }
+    const now = new Date();
+    await database
+      .insert(discordDestinationsTable)
+      .values({
+        userId,
+        channelId,
+        threadId,
+        channelName,
+        threadName,
+        lastUsedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          discordDestinationsTable.userId,
+          discordDestinationsTable.channelId,
+          discordDestinationsTable.threadId,
+        ],
+        set: { channelName, threadName, lastUsedAt: now },
+      });
+  } catch (err) {
+    logger.warn(
+      {
+        userId,
+        channelId,
+        threadId,
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "failed to record destination",
+    );
+  }
+}
+
 async function recoverStuck(logger: Logger) {
   const threshold = new Date(Date.now() - STUCK_AFTER_MS);
   const recovered = await database
@@ -71,6 +127,7 @@ async function processBatch(client: Client, logger: Logger) {
     thread_id: string | null;
     content: string;
     attempt_count: number;
+    created_by_user_id: number | null;
   }>(sql`
     WITH due AS (
       SELECT id
@@ -87,7 +144,7 @@ async function processBatch(client: Client, logger: Logger) {
         updated_at = now()
     FROM due
     WHERE o.id = due.id
-    RETURNING o.id, o.channel_id, o.thread_id, o.content, o.attempt_count
+    RETURNING o.id, o.channel_id, o.thread_id, o.content, o.attempt_count, o.created_by_user_id
   `);
 
   if (claimed.length === 0) return;
@@ -107,6 +164,17 @@ async function processBatch(client: Client, logger: Logger) {
         .set({ status: "sent", sentAt: new Date(), lastError: null })
         .where(eq(discordOutboxTable.id, row.id));
       logger.info({ id: row.id, targetId }, "message sent");
+      if (row.created_by_user_id !== null) {
+        await recordDestination(
+          {
+            userId: row.created_by_user_id,
+            channelId: row.channel_id,
+            threadId: row.thread_id,
+            target,
+          },
+          logger,
+        );
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const exhausted = row.attempt_count >= MAX_ATTEMPTS;
