@@ -1,4 +1,4 @@
-import { verifySession } from "@/lib/dal";
+import { verifyMember } from "@/lib/dal";
 import { AppShell } from "./app-shell";
 
 export default async function AuthedLayout({
@@ -6,7 +6,7 @@ export default async function AuthedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await verifySession();
+  const { user } = await verifyMember();
   return (
     <AppShell userDisplayName={user.name ?? `#${user.id}`}>{children}</AppShell>
   );

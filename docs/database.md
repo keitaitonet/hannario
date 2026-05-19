@@ -22,9 +22,11 @@ Drizzle ORM スキーマと接続、マイグレーション SQL の置き場。
 <!-- prettier-ignore -->
 | テーブル | 主なカラム | 備考 |
 | --- | --- | --- |
-| `users` | `id`, `cognito_sub` (unique), `name` | Cognito サブで upsert |
+| `users` | `id`, `cognito_sub` (unique), `name`, `granted_at`, `granted_by_id` (FK self ref / set null) | Cognito サブで upsert。`granted_at` が NULL = 承認待ち。`granted_by_id` は付与者の user.id (自己参照) |
 | `sessions` | `id`, `token` (unique), `user_id` (FK cascade), `expires_at` | `user_id` と `expires_at` に index |
 | `discord_outbox` | `id` (uuid), `channel_id`, `thread_id`, `content`, `status`, `attempt_count`, `scheduled_at` | `(status, scheduled_at)` に index |
+
+`users.granted_by_id` は自己参照のため drizzle の TS 循環推論を回避する目的で `.references((): AnyPgColumn => usersTable.id, ...)` 形式で書く。最初の signup ユーザーは `upsertUserByCognitoSub` 内のトランザクションで `granted_at = now()` が自動付与される (ブートストラップ管理者)。
 
 `status` の取りうる値: `pending` / `sending` / `sent` / `failed`。詳細は [bot.md](./bot.md) の outbox セクション。
 
