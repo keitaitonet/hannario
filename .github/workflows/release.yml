@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: web
+            dockerfile: apps/web/Dockerfile
+          - target: bot
+            dockerfile: apps/bot/Dockerfile
+          - target: migrate
+            dockerfile: packages/database/Dockerfile
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hannario-${{ matrix.target }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,scope=${{ matrix.target }},mode=max
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: [self-hosted, hannario-production]
+    steps:
+      # clean: false preserves deploy/.env.local placed once on the VM.
+      - uses: actions/checkout@v6
+        with:
+          clean: false
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: deploy
+        working-directory: deploy
+        run: |
+          docker compose pull
+          docker compose run --rm migrate
+          docker compose up -d --wait web bot

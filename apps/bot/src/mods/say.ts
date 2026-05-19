@@ -1,8 +1,4 @@
-import {
-  Events,
-  MessageFlags,
-  SlashCommandBuilder,
-} from "discord.js";
+import { Events, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { config } from "../config";
 import { defineMod } from "../types";
 
