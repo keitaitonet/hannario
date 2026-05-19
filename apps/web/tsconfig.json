@@ -1,0 +1,39 @@
+{
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    // Environment
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "moduleDetection": "force",
+    "jsx": "preserve",
+    "allowJs": true,
+
+    // Modules
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+
+    // Emit
+    "noEmit": true,
+    "incremental": true,
+
+    // Type Checking
+    "noUncheckedSideEffectImports": true,
+
+    // Next.js
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}

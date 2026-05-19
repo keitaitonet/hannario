@@ -1,0 +1,22 @@
+{
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    // Environment
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "moduleDetection": "force",
+
+    // Modules
+    "verbatimModuleSyntax": true,
+
+    // Emit
+    "noEmit": true,
+
+    // Type Checking
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}

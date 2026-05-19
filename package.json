@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "check": "biome check",
+    "check:write": "biome check --write",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev"
+  },
+  "engines": {
+    "node": ">= 22",
+    "pnpm": ">= 10"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15"
+  },
+  "packageManager": "pnpm@10.33.4"
+}
