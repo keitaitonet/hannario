@@ -1,8 +1,8 @@
 # Documentation
 
 <!-- prettier-ignore -->
-| Topic | Description |
+| Topic | 内容 |
 | --- | --- |
-| [Deployment](./deployment.md) | Production topology, CI/CD flow, VM bootstrap, day-to-day operations |
+| [Deployment](./deployment.md) | 本番デプロイ全般 |
 
-New topics: add a sibling `.md` file and list it above. Promote to a subdirectory only once a single topic outgrows one file.
+新しいトピックは sibling として `.md` を追加。1 ファイルに収まらなくなったらそのトピックだけサブディレクトリへ昇格。
