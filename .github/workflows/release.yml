@@ -67,6 +67,7 @@ jobs:
       - name: deploy
         working-directory: deploy
         run: |
+          cp "$HOME/hannario/.env.local" .env.local
           docker compose pull
           docker compose run --rm migrate
           docker compose up -d --wait web bot
