@@ -1,0 +1,87 @@
+name: hannario-production
+
+# Production compose. Used on the home VM, driven by the GitHub Actions
+# self-hosted runner. Deploy sequence:
+#   docker compose pull
+#   docker compose run --rm migrate
+#   docker compose up -d --wait web bot
+#
+# Rollback (manual, on the VM): set IMAGE_TAG in the shell (compose reads it
+# at parse time, env_file does not feed image: tags):
+#   IMAGE_TAG=sha-xxxxxxx docker compose pull
+#   IMAGE_TAG=sha-xxxxxxx docker compose up -d --wait web bot
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: hannario
+    env_file: .env.local
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot. Not started by `up`; invoked via `docker compose run --rm migrate`.
+  migrate:
+    image: ghcr.io/keitaitonet/hannario-migrate:${IMAGE_TAG:-latest}
+    restart: "no"
+    profiles: ["migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env.local
+
+  web:
+    image: ghcr.io/keitaitonet/hannario-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+    env_file: .env.local
+    ports:
+      - "3000:3000"
+    healthcheck:
+      # 127.0.0.1 (not localhost): busybox wget tries IPv6 first, but Next.js
+      # only binds IPv4 (HOSTNAME=0.0.0.0), causing ECONNREFUSED via ::1.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/signed-out"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  bot:
+    image: ghcr.io/keitaitonet/hannario-bot:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+    env_file: .env.local
+
+volumes:
+  postgres-data:
+  redis-data:
