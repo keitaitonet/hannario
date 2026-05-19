@@ -43,9 +43,14 @@ CLAUDE.md
 # Docker / Compose itself
 **/Dockerfile
 .dockerignore
-compose.yaml
-docker-compose.yml
-docker-compose.yaml
+**/compose.yaml
+**/docker-compose.yml
+**/docker-compose.yaml
 
 # Production infra files (not needed inside app images)
 infrastructure
+
+# App-unrelated repo files (kept out of build context so changes here don't
+# bust `COPY . .` layer caches in apps/web and apps/bot Dockerfiles).
+docs
+deploy
