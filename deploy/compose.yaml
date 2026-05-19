@@ -39,8 +39,12 @@ services:
       retries: 5
 
   # One-shot. Not started by `up`; invoked via `docker compose run --rm migrate`.
+  # `pull_policy: always` because `docker compose pull` skips services in
+  # profiles; without this, `run` would reuse a stale local image and apply
+  # only the migrations baked into that older build.
   migrate:
     image: ghcr.io/keitaitonet/hannario-migrate:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: "no"
     profiles: ["migrate"]
     depends_on:

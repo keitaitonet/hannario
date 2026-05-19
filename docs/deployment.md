@@ -152,3 +152,4 @@ major version bump は data dir 非互換なので dump / restore が必要。
 | build 時に env 不要 | `config.ts` と `@repo/database#database` は lazy Proxy。`next build` は env 無しで通る |
 | `next-env.d.ts` は gitignore | `pnpm typecheck` で `next typegen` が先に走って再生成 |
 | OAuth callback で URL を明示構築 | reverse proxy 越しだと openid-client が `req.url` の内部オリジンを redirect_uri にしてしまう。`config.cognito.redirectUri` から組み直して渡す |
+| `docker compose pull` は profile 付き service をスキップ | migrate は `profiles: ["migrate"]` のため `compose pull` で更新されない。`compose.yaml` 側で `pull_policy: always` を付けて `run` 時に常に最新を pull させる |
