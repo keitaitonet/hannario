@@ -1,6 +1,9 @@
+import { existsSync } from "node:fs";
 import { defineConfig } from "drizzle-kit";
 
-process.loadEnvFile(".env.local");
+if (existsSync(".env.local")) {
+  process.loadEnvFile(".env.local");
+}
 
 const { config } = require("./src/config") as typeof import("./src/config");
 
