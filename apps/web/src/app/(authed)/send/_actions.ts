@@ -34,11 +34,12 @@ const SendMessageSchema = v.pipe(
 
 export const sendMessage = memberActionClient
   .inputSchema(SendMessageSchema)
-  .stateAction(async ({ parsedInput }) => {
+  .stateAction(async ({ parsedInput, ctx }) => {
     await database.insert(discordOutboxTable).values({
       channelId: parsedInput.channelId,
       threadId: parsedInput.threadId || null,
       content: parsedInput.content,
+      createdByUserId: ctx.user.id,
     });
     return { ok: true, at: Date.now() };
   });
