@@ -16,7 +16,7 @@
 ```sh
 nvm use
 pnpm install
-docker compose up -d            # postgres (5433) + redis (6379)
+docker compose up -d            # postgres (5433)
 ```
 
 各パッケージで `.env.local.example` をコピーし、必要な値を埋める:

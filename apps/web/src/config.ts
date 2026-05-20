@@ -6,9 +6,6 @@ function load() {
     app: {
       baseUrl,
     },
-    redis: {
-      url: v.parse(v.string(), process.env["REDIS_URL"]),
-    },
     cognito: {
       issuer: v.parse(v.string(), process.env["COGNITO_ISSUER"]),
       loginDomain: v.parse(v.string(), process.env["COGNITO_LOGIN_DOMAIN"]),

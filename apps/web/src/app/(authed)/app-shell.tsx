@@ -1,6 +1,5 @@
 "use client";
 
-import ArticleIcon from "@mui/icons-material/Article";
 import GroupIcon from "@mui/icons-material/Group";
 import HistoryIcon from "@mui/icons-material/History";
 import HomeIcon from "@mui/icons-material/Home";
@@ -33,7 +32,6 @@ const drawerWidth = 240;
 const navItems = [
   { href: "/", label: "Home", icon: <HomeIcon /> },
   { href: "/send", label: "送信", icon: <SendIcon /> },
-  { href: "/logs", label: "ログ", icon: <ArticleIcon /> },
   { href: "/audit", label: "監査ログ", icon: <HistoryIcon /> },
   { href: "/admin/users", label: "ユーザー管理", icon: <GroupIcon /> },
   { href: "/settings", label: "設定", icon: <SettingsIcon /> },
