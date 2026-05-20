@@ -13,6 +13,7 @@
     "@mui/material": "^9.0.1",
     "@mui/material-nextjs": "^9.0.1",
     "@repo/database": "workspace:*",
+    "date-fns": "^4.2.1",
     "drizzle-orm": "^0.45.2",
     "ioredis": "^5.10.1",
     "next": "^16.2.6",
