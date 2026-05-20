@@ -1,8 +1,10 @@
 import { relations } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  bigserial,
   index,
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
@@ -103,6 +105,29 @@ export const discordDestinationsTable = pgTable(
   ],
 );
 
+export const auditLogsTable = pgTable(
+  "audit_logs",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    actorId: integer("actor_id").references(() => usersTable.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    result: text("result").notNull().default("success"),
+    meta: jsonb("meta").$type<Record<string, unknown>>().notNull().default({}),
+  },
+  (table) => [
+    index("audit_logs_created_at_idx").on(table.createdAt),
+    index("audit_logs_actor_created_idx").on(table.actorId, table.createdAt),
+    index("audit_logs_action_created_idx").on(table.action, table.createdAt),
+  ],
+);
+
 export const usersRelations = relations(usersTable, ({ many, one }) => ({
   sessions: many(sessionsTable),
   grantedBy: one(usersTable, {
@@ -129,3 +154,10 @@ export const discordDestinationsRelations = relations(
     }),
   }),
 );
+
+export const auditLogsRelations = relations(auditLogsTable, ({ one }) => ({
+  actor: one(usersTable, {
+    fields: [auditLogsTable.actorId],
+    references: [usersTable.id],
+  }),
+}));

@@ -11,6 +11,7 @@ const GrantSchema = v.object({
 });
 
 export const grantUser = memberActionClient
+  .metadata({ action: "user.grant" })
   .inputSchema(GrantSchema)
   .action(async ({ parsedInput, ctx }) => {
     const res = await database

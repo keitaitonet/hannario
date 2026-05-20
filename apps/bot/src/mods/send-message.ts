@@ -2,6 +2,7 @@ import {
   database,
   discordDestinationsTable,
   discordOutboxTable,
+  writeAuditLog,
 } from "@repo/database";
 import { type Channel, type Client, Events } from "discord.js";
 import { and, eq, lt, sql } from "drizzle-orm";
@@ -117,6 +118,10 @@ async function recoverStuck(logger: Logger) {
       { count: recovered.length },
       "recovered stuck 'sending' rows to 'pending'",
     );
+    await writeAuditLog({
+      action: "discord.outbox.recover_stuck",
+      meta: { count: recovered.length, ids: recovered.map((r) => r.id) },
+    });
   }
 }
 
@@ -164,6 +169,18 @@ async function processBatch(client: Client, logger: Logger) {
         .set({ status: "sent", sentAt: new Date(), lastError: null })
         .where(eq(discordOutboxTable.id, row.id));
       logger.info({ id: row.id, targetId }, "message sent");
+      await writeAuditLog({
+        actorId: row.created_by_user_id,
+        action: "discord.outbox.send",
+        result: "success",
+        targetType: "discord_outbox",
+        targetId: row.id,
+        meta: {
+          channelId: row.channel_id,
+          threadId: row.thread_id,
+          attempt: row.attempt_count,
+        },
+      });
       if (row.created_by_user_id !== null) {
         await recordDestination(
           {
@@ -196,6 +213,21 @@ async function processBatch(client: Client, logger: Logger) {
         },
         exhausted ? "send failed (exhausted)" : "send failed (will retry)",
       );
+      await writeAuditLog({
+        actorId: row.created_by_user_id,
+        action: exhausted
+          ? "discord.outbox.send_exhausted"
+          : "discord.outbox.send_retry",
+        result: "failure",
+        targetType: "discord_outbox",
+        targetId: row.id,
+        meta: {
+          channelId: row.channel_id,
+          threadId: row.thread_id,
+          attempt: row.attempt_count,
+          error: message,
+        },
+      });
     }
   }
 }

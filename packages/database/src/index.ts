@@ -25,4 +25,5 @@ export const database = new Proxy({} as Database, {
   },
 });
 
+export * from "./audit";
 export * from "./schema";
