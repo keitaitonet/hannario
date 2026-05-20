@@ -24,9 +24,6 @@ function load() {
           process.env["DATABASE_SSL"] || undefined,
         ) ?? false,
     },
-    redis: {
-      url: v.parse(v.string(), process.env["REDIS_URL"]),
-    },
     openai: {
       apiKey: v.parse(v.string(), process.env["OPENAI_API_KEY"]),
       baseURL: v.parse(

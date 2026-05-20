@@ -18,7 +18,7 @@ GHA cloud runner (.github/workflows/release.yml)
               docker compose up -d --wait web bot
 
 home VM (compose project `hannario-production`)
-   postgres / redis / web (:3000) / bot
+   postgres / web (:3000) / bot
    ← Cloudflare Tunnel ingress: http://localhost:3000
 ```
 
@@ -131,13 +131,13 @@ cp ~/hannario/.env.local .env.local
 docker compose up -d --force-recreate web bot
 ```
 
-### postgres / redis 更新
+### postgres 更新
 
-`compose.yaml` の image tag を編集 → PR → merge。`release.yml` の `up -d --wait web bot` は postgres / redis に触らないので、VM 上で手動:
+`compose.yaml` の image tag を編集 → PR → merge。`release.yml` の `up -d --wait web bot` は postgres に触らないので、VM 上で手動:
 
 ```sh
-docker compose pull postgres redis
-docker compose up -d postgres redis
+docker compose pull postgres
+docker compose up -d postgres
 ```
 
 major version bump は data dir 非互換なので dump / restore が必要。

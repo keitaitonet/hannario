@@ -20,6 +20,7 @@ const SettingsSchema = v.pipe(
 );
 
 export const updateSettings = memberActionClient
+  .metadata({ action: "user.update_name" })
   .inputSchema(SettingsSchema)
   .stateAction(async ({ parsedInput, ctx }) => {
     await database

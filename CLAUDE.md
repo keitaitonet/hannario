@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 pnpm workspaces のモノレポ。`apps/web` (Next.js 16 App Router, MUI v9, standalone)、`apps/bot` (Discord.js + tsup ESM bundle)、`packages/database` (Drizzle ORM, postgres) の 3 つ。クロスパッケージ依存は `@repo/database` のみ。
 
-ランタイム依存: PostgreSQL 17 / Redis 7 / AWS Cognito / Discord API / OpenAI API / Cloudflare Tunnel。
+ランタイム依存: PostgreSQL 17 / AWS Cognito / Discord API / OpenAI API / Cloudflare Tunnel。
 
 ## コマンド
 
@@ -62,4 +62,5 @@ pnpm workspaces のモノレポ。`apps/web` (Next.js 16 App Router, MUI v9, sta
 - 認証: Cognito Hosted UI → `/api/auth/callback` で code exchange → `sessionsTable` に書き込み、Cookie には DB token のみ。`verifySession()` は React `cache` で同一リクエスト内で重複排除。
 - 認可: `users.granted_at` が NULL のログイン済ユーザーは `(authed)` 配下不可。`/pending` で polling 待機。`verifyMember()` が `granted_at IS NULL` を `/pending` へ redirect。最初の signup は upsert 内で自動 grant。サーバーアクションは `memberActionClient` が member 要件込みのデフォルト。
 - Web → Bot: Server Action から `discord_outbox` に INSERT のみ。Bot 側が 10 秒毎に `FOR UPDATE SKIP LOCKED` で claim → Discord 送信。失敗は backoff、3 回で `failed`、5 分滞留した `sending` は起動時に `recoverStuck` で `pending` 復帰。
-- Bot ログ: pino multistream で stdout / 200 行リングバッファ / Redis `bot:logs` チャンネルへ pub。Web の `/logs/stream` が subscribe して SSE 配信。チャンネル名は `apps/bot/src/logger.ts` と `apps/web/src/app/(authed)/logs/stream/route.ts` で同期。
+- Bot ログ: pino で stdout のみ。コンテナの `docker logs` で参照する。
+- 監査ログ: server action (memberActionClient/authActionClient の middleware) と bot 側 outbox 送信フックから `audit_logs` に INSERT。Web の `/audit` で SSR + cursor pagination で閲覧。

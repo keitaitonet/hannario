@@ -27,17 +27,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # One-shot. Not started by `up`; invoked via `docker compose run --rm migrate`.
   # `pull_policy: always` because `docker compose pull` skips services in
   # profiles; without this, `run` would reuse a stale local image and apply
@@ -57,8 +46,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     environment:
       NODE_ENV: production
@@ -80,12 +67,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       NODE_ENV: production
     env_file: .env.local
 
 volumes:
   postgres-data:
-  redis-data:

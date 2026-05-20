@@ -23,7 +23,6 @@ GatewayIntentBits.MessageContent
 | --- | --- |
 | `sample` | 動作確認用の最小 mod |
 | `chat` | OpenAI 連携の会話 |
-| `log` | `/log` スラッシュコマンドで直近セッションのログを返信 |
 | `send-message` | `discord_outbox` をポーリングして Discord へ送信 |
 | `say` | 任意発話コマンド |
 
@@ -31,16 +30,9 @@ GatewayIntentBits.MessageContent
 
 ## ロガー
 
-Pino の multistream (`src/logger.ts`)。3 つの出力先を持つ:
+Pino (`src/logger.ts`) の標準出力のみ。dev は `pino-pretty`、本番は素の JSON。コンテナの `docker logs` で参照する。
 
-<!-- prettier-ignore -->
-| Stream | 用途 |
-| --- | --- |
-| 標準出力 | dev は `pino-pretty`、本番は素の JSON |
-| メモリリングバッファ (200 行) | `/log` コマンドが pretty 化して返信 |
-| Redis pub `bot:logs` | Web 側 SSE が subscribe してブラウザへ転送 |
-
-Redis 接続エラーは握りつぶして `process.stderr` に出すのみ (ログ pub の失敗で Bot 本体を落とさない)。
+監査用イベント (outbox 送信成否、stuck 復旧) は `writeAuditLog()` 経由で DB の `audit_logs` テーブルに記録する。`/audit` ページから閲覧できる。
 
 ## Outbox パターン (`send-message`)
 

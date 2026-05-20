@@ -33,6 +33,7 @@ const SendMessageSchema = v.pipe(
 );
 
 export const sendMessage = memberActionClient
+  .metadata({ action: "discord.send" })
   .inputSchema(SendMessageSchema)
   .stateAction(async ({ parsedInput, ctx }) => {
     await database.insert(discordOutboxTable).values({
